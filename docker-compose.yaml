@@ -5,21 +5,19 @@ services:
       context: .
       dockerfile: Dockerfile.dev
     ports:
-      - 8000:8000
+      - "8000:8000"
     volumes:
-      - '.:/app'
+      - ".:/app"
     depends_on:
       - dj_ambassador_db
     #command: ["./wait-for-it.sh", "db:5432", "--", "python", "manage.py", "runserver", "0.0.0.0:8000"]
   dj_ambassador_db:
     container_name: dj_ambassador_db
-    image: postgres:15.3
+    image: postgres:16
     restart: always
-    environment:
-      POSTGRES_DB: django_ambassador
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 123123
+    env_file:
+      - ./.env
     volumes:
       - ./.pgdata:/var/lib/postgresql/data # Volume for persisting PostgreSQL data
     ports:
-      - 54326:5432
+      - 54322:5432

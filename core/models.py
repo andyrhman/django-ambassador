@@ -1,3 +1,4 @@
+import uuid
 from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import AbstractUser
 from django.db import models
@@ -55,10 +56,13 @@ class UserManager(BaseUserManager):
         return user
     
 class User(AbstractUser):
+    id = models.UUIDField(default=uuid.uuid4, primary_key=True, editable=False)
     fullName = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
     username = models.CharField(max_length=255, unique=True)
     is_ambassador = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     
     first_name = None
     last_name = None

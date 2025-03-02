@@ -117,4 +117,4 @@ local_settings.py
 .pgdata/
 
 # Python env
-ambassadorenv/
+djangoambassador/
