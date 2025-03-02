@@ -4,6 +4,7 @@ from rest_framework.fields import ObjectDoesNotExist
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import exceptions, generics, mixins, status, viewsets
+from common.authentication import JWTAuthentication
 from common.serializers import UserSerializer
 from core.models import User
 
@@ -44,5 +45,13 @@ class LoginAPIView(APIView):
         if not user.check_password(data["password"]):
             return Response({"message": "Invalid password"}, status=status.HTTP_400_BAD_REQUEST)
         
-        return Response(UserSerializer(user).data)
+        
+        token = JWTAuthentication.generate_jwt(user.id)
+        response = Response()
+        response.set_cookie(key="user_session", value=token, httponly=True)
+        response.data = {
+            "message": "Successfully logged in!"
+        }
+        
+        return response
  
