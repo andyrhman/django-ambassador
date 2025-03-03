@@ -1,3 +1,4 @@
+from django.db import IntegrityError
 from django.forms import NullBooleanField
 from django.shortcuts import render
 from rest_framework.fields import ObjectDoesNotExist
@@ -57,8 +58,46 @@ class LoginAPIView(APIView):
         return response
 
 class UserAPIView(APIView):
+    # User needed to be login
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
     
     def get(self, request):
         return Response(UserSerializer(request.user).data)
+    
+class LogoutAPIView(APIView):
+    # User needed to be login
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, _):
+        response = Response()
+        response.delete_cookie(key="user_session")
+        response.data = {
+            "message": "Success"
+        }
+        return response
+    
+class ProfileInfoAPIView(APIView):
+    # User needed to be login
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]    
+    
+    def put(self, request, pk=None):
+        try:
+            user = request.user
+            serializer = UserSerializer(user, data=request.data, context={'request': request}, partial=True)  # Allow partial updates
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data)
+            
+        except exceptions.ValidationError as e:
+            # Generate a more user-friendly message that includes the field name
+            errors = {key: value[0] for key, value in e.detail.items()}
+            first_field = next(iter(errors))
+            field_name = first_field.replace('_', ' ').capitalize()
+            if 'already exists' in errors[first_field]:
+                message = f"{field_name.capitalize()} already exists."
+            else:
+                message = f"{field_name} error: {errors[first_field]}"
+            return Response({"message": message}, status=status.HTTP_400_BAD_REQUEST)
