@@ -1,6 +1,7 @@
 from django.forms import NullBooleanField
 from django.shortcuts import render
 from rest_framework.fields import ObjectDoesNotExist
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import exceptions, generics, mixins, status, viewsets
@@ -54,4 +55,10 @@ class LoginAPIView(APIView):
         }
         
         return response
- 
+
+class UserAPIView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        return Response(UserSerializer(request.user).data)
