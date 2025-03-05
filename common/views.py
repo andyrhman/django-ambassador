@@ -101,3 +101,21 @@ class ProfileInfoAPIView(APIView):
             else:
                 message = f"{field_name} error: {errors[first_field]}"
             return Response({"message": message}, status=status.HTTP_400_BAD_REQUEST)
+        
+class ProfilePasswordAPIView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    
+    def put(self, request, pk=None):
+        try:
+            user = request.user
+            data = request.data
+            
+            if data["password"] != data["confirm_password"]:
+                return Response({"message": "Password do not match!"})
+            
+            user.set_password(data["password"])
+            user.save()
+            return Response(UserSerializer(user).data)
+        except Exception:
+            return Response({'message': 'Invalid Request'}, status=status.HTTP_400_BAD_REQUEST)
