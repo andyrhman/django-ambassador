@@ -86,3 +86,32 @@ class Link(models.Model):
     products = models.ManyToManyField(Product)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+class Order(models.Model):
+    id = models.UUIDField(default=uuid.uuid4, primary_key=True, editable=False)
+    user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
+    code = models.CharField(max_length=255)
+    ambassador_email = models.CharField(max_length=255)
+    fullName = models.CharField(max_length=255)
+    email = models.CharField(max_length=255)
+    address = models.CharField(max_length=255)
+    city = models.CharField(max_length=255)
+    country = models.CharField(max_length=255)
+    zip = models.CharField(max_length=255)
+    complete = models.BooleanField(default=False) #pyright: ignore
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
+class OrderItem(models.Model):
+    id = models.UUIDField(default=uuid.uuid4, primary_key=True, editable=False)
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="order_items")
+    product_title = models.CharField(max_length=255)
+    price = models.FloatField()
+    quantity = models.IntegerField()
+    admin_revenue = models.FloatField()
+    ambassador_revenue = models.FloatField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
