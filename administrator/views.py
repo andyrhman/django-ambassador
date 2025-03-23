@@ -3,10 +3,10 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from administrator.serializers import ProductSerializer  # pyright: ignore
+from administrator.serializers import LinkSerializer, ProductSerializer  # pyright: ignore
 from common.authentication import JWTAuthentication
 from common.serializers import UserSerializer
-from core.models import Product, User
+from core.models import Link, Product, User
 
 
 # Create your views here.
@@ -58,4 +58,19 @@ class ProductGenericAPIView(
 
     def delete(self, request, pk=None):
         return self.destroy(request, pk)
+
+class LinkAPIView(APIView):
+   authentication_classes = [JWTAuthentication]
+   permission_classes = [IsAuthenticated]
+
+   def get(self, request, pk=None):
+        links = Link.objects.filter(user_id=pk) #pyright: ignore
+        serializer = LinkSerializer(links, many=True)
+
+        return Response(serializer.data)
+
+
+
+
+
 

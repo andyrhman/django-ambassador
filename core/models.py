@@ -77,3 +77,12 @@ class Product(models.Model):
     image = models.CharField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+
+class Link(models.Model):
+    id = models.UUIDField(default=uuid.uuid4, primary_key=True, editable=False)
+    code = models.CharField(max_length=255, unique=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    products = models.ManyToManyField(Product)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
