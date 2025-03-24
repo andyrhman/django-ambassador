@@ -26,13 +26,12 @@ class RegisterAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        data["is_ambassador"] = 0
+        data["is_ambassador"] = 'api/ambassador' in request.path
 
         serializer = UserSerializer(data=data, context={"request": request})
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-
 
 class LoginAPIView(APIView):
     def post(self, request):
@@ -63,7 +62,12 @@ class LoginAPIView(APIView):
                 {"message": "Invalid password"}, status=status.HTTP_400_BAD_REQUEST
             )
 
-        token = JWTAuthentication.generate_jwt(user.id)
+        scope = 'ambassador' if 'api/ambassador' in request.path else 'admin'
+
+        if user.is_ambassador and scope == 'admin':
+            raise exceptions.AuthenticationFailed('Unauthorized')
+
+        token = JWTAuthentication.generate_jwt(user.id, scope)
         response = Response()
         response.set_cookie(key="user_session", value=token, httponly=True)
         response.data = {"message": "Successfully logged in!"}
