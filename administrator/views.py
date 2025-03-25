@@ -11,7 +11,7 @@ from administrator.serializers import (  # pyright: ignore
 from common.authentication import JWTAuthentication
 from common.serializers import UserSerializer
 from core.models import Link, Order, Product, User
-
+from django.core.cache import cache
 
 # Create your views here.
 class AmbassadorsAPIView(APIView):
@@ -45,7 +45,15 @@ class ProductGenericAPIView(
 
     def post(self, request):
         try:
-            return Response(self.create(request).data)
+            response = self.create(request)
+
+            for key in cache.keys('*'):
+                if 'producs_frontend' in key:
+                    cache.delete(key)
+
+            cache.delete('products_backend')
+            return response
+
         except exceptions.ValidationError as e:
             # Generate a more user-friendly message that includes the field name
             errors = {key: value[0] for key, value in e.detail.items()}  # pyright: ignore
@@ -58,11 +66,20 @@ class ProductGenericAPIView(
             return Response({"message": message}, status=status.HTTP_400_BAD_REQUEST)
 
     def put(self, request, pk=None):
-        return self.partial_update(request, pk)
+        response = self.partial_update(request, pk)
+        for key in cache.keys('*'):
+            if 'products_frontend' in key:
+                cache.delete(key)
+        cache.delete('products_backend')
+        return response
 
     def delete(self, request, pk=None):
-        return self.destroy(request, pk)
-
+        response = self.destroy(request, pk)
+        for key in cache.keys('*'):
+            if 'products_frontend' in key:
+                cache.delete(key)
+        cache.delete('products_backend')
+        return response
 
 class LinkAPIView(APIView):
     authentication_classes = [JWTAuthentication]

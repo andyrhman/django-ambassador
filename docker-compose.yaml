@@ -10,6 +10,7 @@ services:
       - ".:/app"
     depends_on:
       - dj_ambassador_db
+      - redis
     #command: ["./wait-for-it.sh", "db:5432", "--", "python", "manage.py", "runserver", "0.0.0.0:8000"]
   dj_ambassador_db:
     container_name: dj_ambassador_db
@@ -21,3 +22,7 @@ services:
       - ./.pgdata:/var/lib/postgresql/data # Volume for persisting PostgreSQL data
     ports:
       - 54322:5432
+  redis:
+    image: redis:latest
+    ports:
+      - 6379:6379
