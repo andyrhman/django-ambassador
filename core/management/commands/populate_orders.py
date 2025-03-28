@@ -1,7 +1,7 @@
 from random import randint
 from django.core.management.base import BaseCommand
 from faker import Faker
-from core.models import Order, OrderItem, User  
+from core.models import Link, Order, OrderItem, User  
 
 class Command(BaseCommand):
     help = "Seed orders and order items data"
@@ -9,10 +9,12 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         faker = Faker("id_ID")
         users = list(User.objects.all())
+        links = Link.objects.all() #pyright: ignore
 
         for i in range(30):
+            link = links[i % len(links)]
             order = Order.objects.create( #pyright: ignore
-                code=faker.pystr(min_chars=7, max_chars=7),
+                code=link.code,
                 ambassador_email=faker.email(),
                 user=users[i % len(users)],  
                 fullName=faker.name(),  

@@ -11,8 +11,10 @@ from rest_framework.views import APIView
 
 from ambassador.serializers import ProductSerializer, LinkSerializer
 from common.authentication import JWTAuthentication
-from core.models import Product
+from core.models import Product, Link, Order
 from rest_framework import exceptions, status
+from django_redis import get_redis_connection
+from faker import Faker
 # Create your views here.
 
 
@@ -69,21 +71,19 @@ class ProductBackendAPIView(APIView):
             }
         )
 
-
 class LinkAPIView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
-
+   
     def post(self, request):
         try:
+            faker = Faker("id_ID")
             user = request.user
 
             serializer = LinkSerializer(
                 data={
                     "user": user.id,
-                    "code": "".join(
-                        random.choices(string.ascii_lowercase + string.digits, k=6)
-                    ),
+                    "code": faker.pystr(min_chars=6, max_chars=6), 
                     "products": request.data["products"],
                 }
             )
@@ -105,3 +105,35 @@ class LinkAPIView(APIView):
                 message = str(e.detail)
             return Response({"message": message}, status=status.HTTP_400_BAD_REQUEST)
 
+class StatsAPIView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+
+        links = Link.objects.filter(user_id=user.id) #pyright: ignore
+
+        return Response([self.format(link) for link in links])
+
+    def format(self, link):
+        orders = Order.objects.filter(code=link.code, complete=1) #pyright: ignore
+
+        return {
+            'code': link.code,
+            'count': len(orders),
+            'revenue': sum(o.ambassador_revenue for o in orders)
+        }
+
+class RankingsAPIView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, _):
+        con = get_redis_connection("default")
+
+        rankings = con.zrevrangebyscore('rankings', min=0, max=10000, withscores=True)
+
+        return Response({
+            r[0].decode("utf-8"): r[1] for r in rankings
+        })
