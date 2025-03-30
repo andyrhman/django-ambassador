@@ -1,0 +1,18 @@
+@Entity('orders')
+export class Order {
+    @PrimaryGeneratedColumn('uuid')
+    id: string;
+
+    // other codes
+
+    @OneToMany(() => OrderItem, orderItem => orderItem.order)
+    order_items: OrderItem[];
+
+    @ManyToOne(() => Link, link => link.orders, {
+        createForeignKeyConstraints: false
+    })
+    @JoinColumn({
+        referencedColumnName: 'code',
+        name: 'code'
+    })
+    links: Link;

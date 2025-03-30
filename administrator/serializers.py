@@ -8,10 +8,6 @@ class ProductSerializer(serializers.ModelSerializer):
         model = Product
         fields = "__all__"
 
-class LinkSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Link
-        fields = "__all__"
 
 class OrderItemSerializer(serializers.ModelSerializer):
     class Meta:
@@ -28,4 +24,11 @@ class OrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Order
+        fields = "__all__"
+
+
+class LinkSerializer(serializers.ModelSerializer):
+    orders = OrderSerializer(many=True, read_only=True)
+    class Meta:
+        model = Link
         fields = "__all__"
