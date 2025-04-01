@@ -7,6 +7,8 @@ import decimal
 from django.db import transaction
 import stripe
 import traceback
+from django.core.mail import send_mail
+from decouple import config
 # Create your views here.
 
 class LinkAPIView(APIView):
@@ -30,6 +32,7 @@ class OrderAPIView(APIView):
             order = Order()
             order.user = link.user
             order.code = link.code
+            order.links = link
             order.ambassador_email = link.user.email
             order.fullName = data['fullName']
             order.email = data['email']
@@ -44,21 +47,22 @@ class OrderAPIView(APIView):
                 product = Product.objects.filter(pk=item["product_id"]).first()
                 quantity = decimal.Decimal(item['quantity'])
                 
-                orderItem = OrderItem()
-                orderItem.order = order
-                orderItem.product_title = product.title
-                orderItem.price = product.price 
-                orderItem.quantity = quantity
-                orderItem.ambassador_revenue = (
+                order_item = OrderItem()
+                order_item.order = order
+                order_item.product_title = product.title
+                order_item.price = product.price 
+                order_item.quantity = quantity
+                order_item.ambassador_revenue = (
                     decimal.Decimal('0.1') *
                     decimal.Decimal(str(product.price)) *
                     quantity
                 )
-                orderItem.admin_revenue =  (
+                order_item.admin_revenue =  (
                     decimal.Decimal('0.1') *
                     decimal.Decimal(str(product.price)) *
                     quantity
                 )
+                order_item.save()
 
                 line_items.append({
                     'price_data': {
@@ -75,7 +79,7 @@ class OrderAPIView(APIView):
                     'quantity': quantity
                 })
 
-            stripe.api_key = 'sk_test_51R7vO3D150d1kLQ1GVFsvNxiFpJKq10Lb6U00zS1E8xqxx1eawEmGpjUEXDL3vCPmPJzZ7pg7entzuZDtcJtXZCI0007AwHd8T'
+            stripe.api_key = config('STRIPE_SECRET_KEY')
 
             source = stripe.checkout.Session.create(
                 success_url='http://localhost:5000/success?source={CHECKOUT_SESSION_ID}',
@@ -95,3 +99,33 @@ class OrderAPIView(APIView):
            transaction.rollback()
         
         return Response({"message": "Success"})
+
+class OrderConfirmAPIView(APIView):
+    def post(self, request):
+
+        order = Order.objects.filter(transaction_id=request.data['source']).first()
+        if not order:
+            raise exceptions.APIException('Order not found!')
+
+        order.complete = 1
+        order.save()
+
+        # Admin Email
+        send_mail(
+            subject='An Order has been completed',
+            message='Order #' + str(order.id) + 'with a total of Rp' + str(order.admin_revenue) + ' has been completed!',
+            from_email='from@email.com',
+            recipient_list=['admin@admin.com']
+        )
+
+        send_mail(
+            subject='An Order has been completed',
+            message='You earned Rp' + str(order.ambassador_revenue) + ' from the link #' + order.code,
+            from_email='from@email.com',
+            recipient_list=[order.ambassador_email]
+        )
+
+        return Response({
+            'message': 'success'
+        })
+
