@@ -100,7 +100,7 @@ class Order(models.Model):
     transaction_id = models.CharField(max_length=255, null=True)
     id = models.UUIDField(default=uuid.uuid4, primary_key=True, editable=False)
     user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
-    links = models.ForeignKey(Link, null=True, on_delete=models.SET_NULL, related_name="orders") # finding the nested orders for link serializers
+    links = models.ForeignKey(Link, null=True, on_delete=models.SET_NULL, related_name="lynkx") # finding the nested orders for link serializers
     code = models.CharField(max_length=255)
     ambassador_email = models.CharField(max_length=255)
     fullName = models.CharField(max_length=255)

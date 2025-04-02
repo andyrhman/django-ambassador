@@ -28,7 +28,7 @@ class OrderSerializer(serializers.ModelSerializer):
 
 
 class LinkSerializer(serializers.ModelSerializer):
-    orders = OrderSerializer(many=True, read_only=True)
+    lynkx = OrderSerializer(many=True, read_only=True)
     class Meta:
         model = Link
         fields = "__all__"
